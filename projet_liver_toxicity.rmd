@@ -1,0 +1,38 @@
+```{r}
+setwd("~/Scolaire/IODAA/IODAA/Stats")
+library(mixOmics)
+data(liver.toxicity)
+
+```
+
+```{r}
+help(liver.toxicity)
+```
+
+```{r}
+head(liver.toxicity)
+```
+```{r}
+write.csv(liver.toxicity$gene,file='liver_gene.csv')
+write.csv(liver.toxicity$clinic,file='liver_clinic.csv')
+write.csv(liver.toxicity$treatment,file='liver_treatment.csv')
+```
+
+```{r}
+df_genes <- liver.toxicity$gene # use the gene expression data as the X matrix
+df_clinic <- liver.toxicity$clinic # use the clinical data as the Y matrix
+
+```
+
+```{r}
+library(FactoMineR)
+```
+```{r}
+res.pca = PCA(df_clinic, scale.unit=TRUE, ncp=5, graph=T) 
+
+```
+```{r}
+res.pca = PCA(df_genes, scale.unit=TRUE, ncp=5, graph=T) 
+
+```
+
