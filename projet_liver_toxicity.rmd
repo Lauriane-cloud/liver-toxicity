@@ -21,6 +21,7 @@ write.csv(liver.toxicity$treatment,file='liver_treatment.csv')
 ```{r}
 df_genes <- liver.toxicity$gene # use the gene expression data as the X matrix
 df_clinic <- liver.toxicity$clinic # use the clinical data as the Y matrix
+df_treatment <- liver.toxicity$treatment
 
 ```
 
@@ -31,8 +32,74 @@ library(FactoMineR)
 res.pca = PCA(df_clinic, scale.unit=TRUE, ncp=5, graph=T) 
 
 ```
+
+```{r}
+pca.gene <- pca(df_genes, ncomp = 10, center = TRUE, scale = TRUE)
+pca.clinic <- pca(df_clinic, ncomp = 10, center = TRUE, scale = TRUE)
+
+plot(pca.gene)
+plot(pca.clinic)
+```
+
+
 ```{r}
 res.pca = PCA(df_genes, scale.unit=TRUE, ncp=5, graph=T) 
 
+```
+
+```{r}
+library(MultiVarSel)
+```
+
+```{r}
+X1 <- df_treatment$Dose.Group
+X2 <- df_treatment$Time.Group
+```
+
+```{r}
+table(X1,X2)
+```
+
+```{r}
+Y <- as.matrix(df_genes)
+```
+
+```{r}
+X <- model.matrix(lm(Y ~ X2 + 0))
+p <- ncol(X)
+n=nrow(X)
+n
+```
+
+```{r}
+residuals=lm(as.matrix(Y)~X-1)$residuals
+residuals
+```
+```{r}
+pvalue=whitening_test(residuals)
+pvalue
+```
+```{r}
+result=whitening_choice(residuals,c("AR1","nonparam","ARMA"),pAR=1,qMA=1)
+result
+```
+
+```{r}
+q=dim(Y)[2]
+```
+
+
+```{r}
+Yvec=as.numeric(Y)
+Xvec=kronecker(diag(q),X)
+length(Yvec)
+```
+```{r}
+dim(Xvec)
+```
+
+```{r}
+resultat_cv=cv.glmnet(Xvec,Yvec,nfolds=3,family="gaussian",alpha=1,grouped=FALSE)
+lambda_min=resultat_cv$lambda.min
 ```
 
