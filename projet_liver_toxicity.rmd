@@ -103,3 +103,21 @@ resultat_cv=cv.glmnet(Xvec,Yvec,nfolds=3,family="gaussian",alpha=1,grouped=FALSE
 lambda_min=resultat_cv$lambda.min
 ```
 
+```{r}
+nb_repli=50
+stabsel.glmnet <- function(i) {
+  b_sort <- sort(sample(1:(n*q),floor((n*q)/2)))
+  resultat_glmnet=glmnet(Xvec[b_sort,],Yvec[b_sort],family="gaussian",alpha=1,lambda=lambda_min)
+  ind_glmnet=which(resultat_glmnet$beta!=0)
+  return(tabulate(ind_glmnet,(p*q)))}
+res.cum <- Reduce("+", lapply(1:nb_repli, stabsel.glmnet))
+```
+
+```{r}
+ind=which((res.cum/nb_repli)==1)
+length(ind)
+```
+```{r}
+print(res.cum)
+```
+
