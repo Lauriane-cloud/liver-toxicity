@@ -1,0 +1,200 @@
+---
+title: "liver_tox"
+author: "Lauriane Mousset"
+date: "2024-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+setwd("~/Scolaire/IODAA/IODAA/Stats")
+library(mixOmics)
+data(liver.toxicity)
+
+```
+```{r}
+df_genes <- liver.toxicity$gene 
+df_clinic <- liver.toxicity$clinic
+df_treatment <- liver.toxicity$treatment
+```
+```{r}
+head(df_genes)
+```
+
+
+```{r}
+library(FactoMineR)
+
+```
+
+```{r}
+res.pca = PCA(df_clinic, scale.unit=TRUE, ncp=5, graph=T) 
+```
+```{r}
+res.pca = PCA(df_genes, scale.unit=TRUE, ncp=5, graph=T) 
+
+```
+
+```{r}
+X <- df_treatment$Treatment.Group
+```
+
+```{r}
+Y <- as.matrix(df_genes)
+```
+
+```{r}
+X <- model.matrix(lm(Y ~ X + 0))
+p <- ncol(X)
+n=nrow(X)
+n
+```
+```{r}
+residuals=lm(Y~X-1)$residuals
+```
+
+```{r}
+pvalue=whitening_test(residuals)
+pvalue
+```
+
+```{r}
+result=whitening_choice(residuals,c("AR1","nonparam","ARMA", "no_whitening"),pAR=1,qMA=1)
+result
+```
+
+```{r}
+square_root_inv_hat_sigma = whitening(residuals, "AR1")
+```
+
+```{r}
+square_root_inv_hat_sigma
+```
+
+
+```{r}
+q=dim(Y)[2]
+```
+
+
+```{r}
+Frequencies=variable_selection(as.matrix(df_genes),X,square_root_inv_hat_sigma,nb_repli=1000,parallel=FALSE)
+```
+
+```{r}
+Freq_copie <- Frequencies
+```
+
+
+```{r}
+Frequencies
+```
+```{r}
+colnames(Frequencies)<-c('Names_of_Y','Names_of_X','frequency')
+# Here we can consider the names of Y as numerical since they correspond
+# to the ratio m/z of the metabolites.
+Frequencies
+```
+```{r}
+Frequencies$Names_of_X<-sub('X2','',Frequencies$Names_of_X)
+
+
+p <- ggplot(data=Frequencies[Frequencies$frequency>=0.95,], aes(x=Names_of_Y,y=Names_of_X,color=frequency)) +
+  geom_tile(linewidth=0.75)+scale_color_gradient2(midpoint=0.95,mid ='orange') +
+  theme_bw()+ylab('Levels of X')+xlab('Gènes')
+p
+```
+```{r}
+p <- ggplot(data=Frequencies[Frequencies$frequency>=0.998,], aes(x=Names_of_Y,y=Names_of_X,color=Names_of_X)) +
+  geom_point(size=2) +
+  theme_bw()+ylab('Levels of X')+xlab('Gènes')
+p
+```
+```{r}
+Frequencies
+```
+
+```{r}
+lignes_selectionnees <- Frequencies[Frequencies$frequency >= 0.998, ]
+```
+```{r}
+lignes_selectionnees
+```
+
+```{r}
+X1 <- lignes_selectionnees$Names_of_X
+X1
+
+Y1 <- lignes_selectionnees$Names_of_Y
+Y1
+```
+
+```{r}
+Y_bis <- df_genes
+```
+
+```{r}
+nom_colonnes <- colnames(Y_bis)
+#nom_colonnes
+
+for (element in Y1) {
+  nom_colonnes <- subset(nom_colonnes, nom_colonnes != element)
+}
+
+
+#print(nom_colonnes_sansY1)
+length(nom_colonnes)
+```
+```{r}
+Y_aaa <- subset(Y_bis, select = Y1)
+```
+
+```{r}
+Y_aaa
+```
+```{r}
+length(Y_aaa)
+length(X1)
+model <- lm(as.matrix(Y_aaa) ~ X + 0)
+```
+```{r}
+summary(model)
+```
+
+```{r}
+
+```
+
+
+
+```{r}
+res.pca = PCA(df_genes, scale.unit=TRUE, ncp=5, graph=T) 
+
+```
+```{r}
+res.pca = PCA(Y_aaa, scale.unit=TRUE, ncp=5, graph=T) 
+
+```
+```{r}
+library(FactoMineR)
+
+# Supposons que df_genes est votre dataframe contenant les données de gènes
+
+# Exécution de l'analyse en composantes principales (PCA)
+res.pca <- PCA(df_genes, scale.unit = TRUE, ncp = 5, graph = TRUE)
+
+# Vecteur contenant les noms des 19 gènes à mettre en évidence
+genes_highlight <- c("A_42_P789770", "A_43_P12445", "A_42_P454894", "A_43_P12845", "A_43_P19265", "A_42_P744380", "A_42_P771185", "A_43_P17455", "A_42_P808401", "A_43_P16045", "A_43_P23016", "A_42_P556291", "A_42_P758454", "A_42_P830405", "A_43_P12257", "A_42_P562842", "A_43_P13423", "A_42_P690198", "A_43_P18325")
+
+# Trouver les indices des gènes à mettre en évidence dans le dataframe
+highlight_indices <- which(res.pca$var$names %in% genes_highlight)
+
+res.pca <- PCA(df_genes, scale.unit = TRUE, ncp = 5, graph = TRUE, color = highlight_indices)
+# Afficher le graphique mis à jour
+plot(res.pca)
+
+```
+
